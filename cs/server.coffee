@@ -1,17 +1,34 @@
-server  = require 'http'
-socket  = require 'socket.io'
-
-app = server.createServer (req,res) ->
-  res.writeHead 200
-  res.end 'Gallo from da house!'
-  return
-.listen 8080
-
-io = socket.listen app
+io = require('socket.io').listen 8080
 
 io.sockets.on 'connection', (socket) ->
-  socket.set 'nickname', "gallis#{Math.floor(Math.random()*11)}"
+  socket_nickname = choose_nickname()
+  socket.set 'nickname', socket_nickname, ->
+    socket.broadcast.emit 'new_connection', { nickname: socket_nickname }
+
   socket.on 'msg', (data) ->
     socket.get 'nickname' , (err,nick) ->
-      socket.broadcast.emit 'postMsg', {msg: data.msg, nickname: nick}
+      socket.broadcast.emit 'postMsg', { msg: data.msg, nickname: nick }
   return
+
+choose_nickname = ->
+  nicknames = [
+    'El Peje'
+    , 'Enrique Peña Nieto'
+    , 'Elba Esther'
+    , 'El teacher'
+    , 'Derbez'
+    , 'Poniatowska'
+    , 'Loret'
+    , 'El Chicharito'
+    , 'El Canelo'
+    , 'Josefina VM'
+    , 'La prole'
+    , 'Paullette'
+    , 'El Vitor'
+    , 'Azcarraga'
+    , 'Aramburuzabala'
+    , 'Slim'
+    , 'Adal'
+    , 'Dresser'
+  ]
+  nicknames[Math.floor(Math.random()*nicknames.length)]
