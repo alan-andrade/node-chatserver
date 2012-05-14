@@ -5,10 +5,13 @@ io.sockets.on 'connection', (socket) ->
   socket.set 'nickname', socket_nickname, ->
     socket.broadcast.emit 'new_connection', { nickname: socket_nickname }
 
-  socket.on 'msg', (data) ->
+  socket.on 'client_message', (data) ->
     socket.get 'nickname' , (err,nick) ->
-      socket.broadcast.emit 'postMsg', { msg: data.msg, nickname: nick }
+      socket.broadcast.emit 'receive_message', { body: data.body, nickname: nick }
   return
+
+  socket.on 'disconnet', ->
+    socket.broadcast.emit 'user_leave'
 
 choose_nickname = ->
   nicknames = [
