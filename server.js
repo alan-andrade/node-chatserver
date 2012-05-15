@@ -8,7 +8,10 @@
     var socket_nickname;
     socket_nickname = choose_nickname();
     socket.set('nickname', socket_nickname, function() {
-      return socket.broadcast.emit('new_connection', {
+      socket.broadcast.emit('new_connection', {
+        nickname: socket_nickname
+      });
+      return socket.emit('new_connection', {
         nickname: socket_nickname
       });
     });
