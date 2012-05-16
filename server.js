@@ -6,17 +6,17 @@
     socket_nickname = choose_nickname();
     socket.set('nickname', socket_nickname, function() {
       socket.emit('new_connection', {
-        body: "Has iniciado sesion como " + socket_nickname
+        body: "Haz iniciado sesion como " + socket_nickname + "... y te aguantas"
       });
       return socket.broadcast.emit('new_connection', {
-        body: "Ingreso " + socket_nickname
+        body: "" + socket_nickname + " entro a la grilla"
       });
     });
     socket.on('client_message', function(data) {
       return socket.get('nickname', function(err, nick) {
         return socket.broadcast.emit('receive_message', {
           body: data.body,
-          nickname: nick
+          sender: nick
         });
       });
     });

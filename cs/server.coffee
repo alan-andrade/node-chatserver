@@ -8,7 +8,7 @@ io.sockets.on 'connection', (socket) ->
 
   socket.on 'client_message', (data) ->
     socket.get 'nickname' , (err,nick) ->
-      socket.broadcast.emit 'receive_message', { body: data.body, nickname: nick }
+      socket.broadcast.emit 'receive_message', { body: data.body, sender: nick }
   return
 
   socket.on 'disconnet', ->
