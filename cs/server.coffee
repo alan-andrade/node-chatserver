@@ -1,26 +1,30 @@
+_  = require 'underscore'
 io = require('socket.io').listen 8080
 
 io.sockets.on 'connection', (socket) ->
-  socket_nickname = choose_nickname()
+  socket_nickname = NickFactory.choose()
   socket.set 'nickname', socket_nickname, ->
-    socket.emit 'new_connection', { body: "Haz iniciado sesion como #{socket_nickname}... y te aguantas" }
+    socket.emit 'new_connection', { body: "Haz iniciado sesion como #{socket_nickname}..." }
     socket.broadcast.emit 'new_connection', { body: "#{socket_nickname} entro a la grilla" }
 
   socket.on 'client_message', (data) ->
     socket.get 'nickname' , (err,nick) ->
       socket.broadcast.emit 'receive_message', { body: data.body, sender: nick }
+
+  socket.on 'disconnect', ->
+    socket.get 'nickname' , (err,nick) ->
+      NickFactory.release(nick)
+      io.sockets.emit 'user_leave', { body: "#{nick} se ha ido :(" }
+
   return
 
-  socket.on 'disconnet', ->
-    socket.broadcast.emit 'user_leave'
-
-choose_nickname = ->
-  nicknames = [
+NickFactory = {
+  _free : [
     'El Peje'
-    , 'Enrique Peña Nieto'
+    , 'EPN'
     , 'Elba Esther'
-    , 'El teacher'
-    , 'Derbez'
+    , 'Brozo'
+    , 'Quadri'
     , 'Poniatowska'
     , 'Loret'
     , 'El Chicharito'
@@ -28,11 +32,38 @@ choose_nickname = ->
     , 'Josefina VM'
     , 'La prole'
     , 'Paullette'
-    , 'El Vitor'
-    , 'Azcarraga'
+    , 'Azcárraga'
     , 'Aramburuzabala'
     , 'Slim'
     , 'Adal'
     , 'Dresser'
+    , 'Frida Khalo'
+    , 'Santa Anna'
+    , 'Cantinflas'
+    , 'Irma Serrano'
+    , 'Pancho Villa'
+    , 'Hidalgo'
+    , 'El chapulín colorado'
+    , 'Benito Juárez'
+    , 'Morelos'
+    , 'Margarito'
+    , 'El Santo'
+    , 'Juan Ga'
+    , 'Calderón'
   ]
-  nicknames[Math.floor(Math.random()*nicknames.length)]
+  , _given  : []
+  , choose  : ->
+    chosen = _.first(_.shuffle(this._free))
+    if chosen
+      this._given.push chosen
+    else
+      chosen = "Ciudadano: #{ (Math.random()*1000)+1 }"
+    chosen
+  , release : (name) ->
+    index = _.indexOf(this._given, name)
+    this._given.splice(1, index)
+    this._free.push name
+    return
+
+
+}
