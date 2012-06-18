@@ -1,29 +1,61 @@
-io = require('socket.io').listen 8080
+io = require('socket.io').listen(8080)
+uuid = require('node-uuid')
 
 io.sockets.on 'connection', (socket) ->
+  socket.emit 'user.uid'
 
-  socket.on 'nickname', ( name ) ->
-    socket.set 'nickname', name.nick, ->
-      params = name: name.nick
-      socket.broadcast.emit 'nickname', params
-      socket.emit 'nickname', params
-
-  socket.on 'message', ( msg, fn ) ->
-    socket.broadcast.emit 'message',
-      body: msg.body
-    fn()
-
+  socket.on 'user.uid=', (uid) ->
+    user = User.find(uid)
+    if user?
+      user.activate()
+      user.save()
+      socket.set 'uid', user.uid
+      socket.emit 'user.create',
+        name: user.name
+        uid: user.uid
+    else
+      socket.emit 'user.name'
     return
 
-#  socket.on 'client_message', (data) ->
-    #socket.get 'nickname' , (err,nick) ->
-      #socket.broadcast.emit 'receive_message', { body: data.body, sender: nick }
+  socket.on 'user.name=', (name) ->
+    user = new User(name)
+    user.save()
+    socket.set 'uid', user.uid
+    socket.emit 'user.create',
+      name: user.name
+      uid: user.uid
+    return
 
-  #socket.on 'disconnect', ->
-    #socket.get 'nickname' , (err,nick) ->
-      #io.sockets.emit 'user_leave', { body: "#{nick} se ha ido :(" }
+  socket.on 'user.speak', (msg) ->
+    socket.broadcast.emit 'user.speak', msg
 
-  #socket.on 'get_nickname', ->
-  #  socket.set 'nickname', 'given fake nickname' , ->
+  socket.on 'disconnect', ->
+    socket.get 'uid', (err, uid) ->
+      user = User.find uid
+      user.deactivate()
 
-  return
+
+class User
+  constructor: (@name) ->
+    @online = true
+    @uid = uuid.v1()
+
+  @find: (uid) ->
+    User.source[uid]
+
+  save: ->
+    User.source[@uid] = @
+    User.hooks()
+
+  activate: ->
+    @online = true
+    User.hooks()
+
+  deactivate: ->
+    @online = false
+    User.hooks()
+
+  @hooks: ->
+    io.sockets.emit 'users.refresh', User.source
+
+User.source = {}
