@@ -40,7 +40,9 @@
       return socket.get('uid', function(err, uid) {
         var user;
         user = User.find(uid);
-        return user.deactivate();
+        if (user != null) {
+          return user.deactivate();
+        }
       });
     });
   });

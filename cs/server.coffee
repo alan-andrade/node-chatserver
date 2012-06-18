@@ -32,7 +32,8 @@ io.sockets.on 'connection', (socket) ->
   socket.on 'disconnect', ->
     socket.get 'uid', (err, uid) ->
       user = User.find uid
-      user.deactivate()
+      if user?
+        user.deactivate()
 
 
 class User
